@@ -41,27 +41,29 @@ lib/ ├── core/ │ ├── errors/ │ ├── usecases/ │ └──
 ```bash
 git clone https://github.com/Vladeouz/flutter_clean_architecture_template.git
 cd flutter_clean_architecture_template
+```
+### 2. Install dependencies
 
-2. Install dependencies
-Run the following command to install all necessary packages:
+```bash
 flutter pub get
+```
+### 3.  Run the app
 
-3. Run the app
-Run the app on an emulator or connected device:
+```bash
 flutter run
+```
 
-Customizing the Template
-1. Replace the Todo feature with your own domain.
-2. Modify use cases, repositories, and entities to fit your app’s needs.
-3. Add more features following the same structure as the todo feature.
-4. Update the routes in AppRouter to match your application's navigation.
+### 4. Customizing the Template
+- Replace the Todo feature with your own domain.
+- Modify use cases, repositories, and entities to fit your app’s needs.
+- Add more features following the same structure as the todo feature.
+- Update the routes in AppRouter to match your application's navigation.
 
-Contributing
+### Contributing
 Feel free to fork this template and use it in your projects. If you have any improvements or bug fixes, please open a pull request.
 
-License
+### License
 This project is licensed under the MIT License - see the LICENSE file for details.
-
 
 ### Penjelasan:
 - **Project Structure**: Penjelasan singkat mengenai struktur folder dan file dalam proyek ini.
@@ -70,7 +72,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Getting Started**: Langkah-langkah untuk menyiapkan proyek di komputer lokal.
 - **Testing**: Menyediakan informasi untuk menjalankan tes unit dan widget yang ada.
 - **Contributing**: Mengundang kolaborasi dari orang lain untuk menyempurnakan template ini.
-
-Kamu bisa mengedit atau menambah bagian yang lebih spesifik sesuai dengan kebutuhanmu. Jika sudah siap, kamu bisa menyertakan **`README.md`** ini di repositori GitHub kamu.
-
-Jika ada tambahan atau perubahan lain yang ingin dilakukan, beri tahu saja!
