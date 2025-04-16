@@ -1,162 +1,122 @@
 import 'dart:io';
 
-void main() async {
-  final base = 'lib/features/todo';
+void main() {
+  final folders = [
+    'lib/core/errors',
+    'lib/core/usecases',
+    'lib/core/utils',
+    'lib/features/todo/data/models',
+    'lib/features/todo/data/repositories',
+    'lib/features/todo/domain/entities',
+    'lib/features/todo/domain/repositories',
+    'lib/features/todo/domain/usecases',
+    'lib/features/todo/presentation/bloc',
+    'lib/features/todo/presentation/pages',
+    'lib/features/todo/presentation/widgets',
+  ];
 
   final files = {
-    '$base/domain/entities/todo_entity.dart': '''
-import 'package:equatable/equatable.dart';
+    // CORE
+    'lib/core/errors/exceptions.dart': '''
+class ServerException implements Exception {}
 
-class TodoEntity extends Equatable {
-  final int id;
+class CacheException implements Exception {}
+''',
+    'lib/core/usecases/usecase.dart': '''
+abstract class UseCase<Type, Params> {
+  Future<Type> call(Params params);
+}
+
+class NoParams {}
+''',
+    'lib/core/utils/constants.dart': '''
+class Constants {
+  static const String appName = 'Clean Architecture Template';
+}
+''',
+
+    // DATA
+    'lib/features/todo/data/models/todo_model.dart': '''
+class TodoModel {
+  final String id;
   final String title;
-  final bool isCompleted;
 
-  const TodoEntity({
-    required this.id,
-    required this.title,
-    required this.isCompleted,
-  });
+  TodoModel({required this.id, required this.title});
+}
+''',
+    'lib/features/todo/data/repositories/todo_repository_impl.dart': '''
+import '../../domain/repositories/todo_repository.dart';
 
+class TodoRepositoryImpl implements TodoRepository {
   @override
-  List<Object?> get props => [id, title, isCompleted];
+  List<String> fetchTodos() {
+    return ['Sample Todo 1', 'Sample Todo 2'];
+  }
 }
 ''',
-    '$base/domain/repositories/todo_repository.dart': '''
-import '../entities/todo_entity.dart';
 
+    // DOMAIN
+    'lib/features/todo/domain/entities/todo.dart': '''
+class Todo {
+  final String id;
+  final String title;
+
+  Todo({required this.id, required this.title});
+}
+''',
+    'lib/features/todo/domain/repositories/todo_repository.dart': '''
 abstract class TodoRepository {
-  Future<List<TodoEntity>> getTodos();
+  List<String> fetchTodos();
 }
 ''',
-    '$base/domain/usecases/get_todos.dart': '''
-import '../entities/todo_entity.dart';
+    'lib/features/todo/domain/usecases/get_todos.dart': '''
+import 'package:flutter_clean_architecture_template/core/usecases/usecase.dart';
 import '../repositories/todo_repository.dart';
+import '../entities/todo.dart';
 
-class GetTodos {
+class GetTodos implements UseCase<List<Todo>, NoParams> {
   final TodoRepository repository;
 
   GetTodos(this.repository);
 
-  Future<List<TodoEntity>> call() async {
-    return repository.getTodos();
-  }
-}
-''',
-    '$base/data/models/todo_model.dart': '''
-import '../../domain/entities/todo_entity.dart';
-
-class TodoModel extends TodoEntity {
-  const TodoModel({
-    required super.id,
-    required super.title,
-    required super.isCompleted,
-  });
-
-  factory TodoModel.fromJson(Map<String, dynamic> json) {
-    return TodoModel(
-      id: json['id'],
-      title: json['title'],
-      isCompleted: json['isCompleted'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'isCompleted': isCompleted,
-    };
-  }
-}
-''',
-    '$base/data/datasources/todo_local_datasource.dart': '''
-import '../models/todo_model.dart';
-
-abstract class TodoLocalDataSource {
-  List<TodoModel> getTodos();
-}
-
-class DummyTodoLocalDataSource implements TodoLocalDataSource {
   @override
-  List<TodoModel> getTodos() {
-    return [
-      const TodoModel(id: 1, title: 'Buy milk', isCompleted: false),
-      const TodoModel(id: 2, title: 'Do homework', isCompleted: true),
-    ];
+  Future<List<Todo>> call(NoParams params) async {
+    return await repository.fetchTodos();
   }
 }
 ''',
-    '$base/data/repositories/todo_repository_impl.dart': '''
-import '../../domain/entities/todo_entity.dart';
-import '../../domain/repositories/todo_repository.dart';
-import '../datasources/todo_local_datasource.dart';
 
-class TodoRepositoryImpl implements TodoRepository {
-  final TodoLocalDataSource localDataSource;
-
-  TodoRepositoryImpl(this.localDataSource);
-
-  @override
-  Future<List<TodoEntity>> getTodos() async {
-    return localDataSource.getTodos();
-  }
-}
-''',
-    '$base/presentation/bloc/todo_bloc.dart': '''
+    // PRESENTATION - BLOC
+    'lib/features/todo/presentation/bloc/todo_bloc.dart': '''
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/todo_entity.dart';
-import '../../domain/usecases/get_todos.dart';
-
-part 'todo_event.dart';
-part 'todo_state.dart';
-
-class TodoBloc extends Bloc<TodoEvent, TodoState> {
-  final GetTodos getTodos;
-
-  TodoBloc(this.getTodos) : super(TodoInitial()) {
-    on<LoadTodosEvent>((event, emit) async {
-      emit(TodoLoading());
-      try {
-        final todos = await getTodos();
-        emit(TodoLoaded(todos));
-      } catch (e) {
-        emit(TodoError("Failed to load todos"));
-      }
-    });
-  }
-}
-''',
-    '$base/presentation/bloc/todo_event.dart': '''
-part of 'todo_bloc.dart';
 
 abstract class TodoEvent {}
 
 class LoadTodosEvent extends TodoEvent {}
-''',
-    '$base/presentation/bloc/todo_state.dart': '''
-part of 'todo_bloc.dart';
 
 abstract class TodoState {}
 
 class TodoInitial extends TodoState {}
 
-class TodoLoading extends TodoState {}
-
 class TodoLoaded extends TodoState {
-  final List<TodoEntity> todos;
+  final List<String> todos;
   TodoLoaded(this.todos);
 }
 
-class TodoError extends TodoState {
-  final String message;
-  TodoError(this.message);
+class TodoBloc extends Bloc<TodoEvent, TodoState> {
+  TodoBloc() : super(TodoInitial()) {
+    on<LoadTodosEvent>((event, emit) {
+      emit(TodoLoaded(['Example Todo']));
+    });
+  }
 }
 ''',
-    '$base/presentation/pages/todo_page.dart': '''
+
+    // PRESENTATION - PAGES
+    'lib/features/todo/presentation/pages/todo_page.dart': '''
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/todo_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TodoPage extends StatelessWidget {
   const TodoPage({super.key});
@@ -167,39 +127,101 @@ class TodoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Todos')),
       body: BlocBuilder<TodoBloc, TodoState>(
         builder: (context, state) {
-          if (state is TodoLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is TodoLoaded) {
+          if (state is TodoLoaded) {
             return ListView.builder(
               itemCount: state.todos.length,
               itemBuilder: (context, index) {
-                final todo = state.todos[index];
-                return ListTile(
-                  title: Text(todo.title),
-                  trailing: Icon(
-                    todo.isCompleted ? Icons.check : Icons.close,
-                    color: todo.isCompleted ? Colors.green : Colors.red,
-                  ),
-                );
+                return ListTile(title: Text(state.todos[index]));
               },
             );
-          } else if (state is TodoError) {
-            return Center(child: Text(state.message));
           }
-          return const SizedBox();
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );
   }
 }
 ''',
+    'lib/features/todo/presentation/pages/another_page.dart': '''
+import 'package:flutter/material.dart';
+
+class AnotherPage extends StatelessWidget {
+  const AnotherPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Another Page')),
+      body: const Center(child: Text('Another Page Content')),
+    );
+  }
+}
+''',
+
+    // DEPENDENCY INJECTION
+    'lib/injection_container.dart': '''
+import 'package:get_it/get_it.dart';
+
+import 'features/todo/data/repositories/todo_repository_impl.dart';
+import 'features/todo/domain/repositories/todo_repository.dart';
+import 'features/todo/domain/usecases/get_todos.dart';
+import 'features/todo/presentation/bloc/todo_bloc.dart';
+
+final sl = GetIt.instance;
+
+Future<void> init() async {
+  // Bloc
+  sl.registerFactory(() => TodoBloc());
+
+  // Use cases
+  sl.registerLazySingleton(() => GetTodos(sl()));
+
+  // Repositories
+  sl.registerLazySingleton<TodoRepository>(() => TodoRepositoryImpl());
+}
+''',
+
+    // ROUTER
+    'lib/router.dart': '''
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import 'features/todo/presentation/pages/todo_page.dart';
+import 'features/todo/presentation/pages/another_page.dart';
+import 'features/todo/presentation/bloc/todo_bloc.dart';
+import 'injection_container.dart';
+
+class AppRouter {
+  static GoRouter get router {
+    return GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) {
+            return BlocProvider(
+              create: (_) => sl<TodoBloc>()..add(LoadTodosEvent()),
+              child: const TodoPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/another',
+          builder: (context, state) => const AnotherPage(),
+        ),
+      ],
+    );
+  }
+}
+''',
   };
 
-  for (final entry in files.entries) {
-    final file = File(entry.key);
-    await file.create(recursive: true);
-    await file.writeAsString(entry.value);
+  for (var folder in folders) {
+    Directory(folder).createSync(recursive: true);
   }
 
-  print('✅ Semua file Todo feature berhasil digenerate!');
+  files.forEach((path, content) {
+    File(path).writeAsStringSync(content);
+  });
+
+  print('✅ Folder and file structure created successfully!');
 }

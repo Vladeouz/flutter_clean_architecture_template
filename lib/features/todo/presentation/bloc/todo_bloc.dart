@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_clean_architecture_template/core/usecases/usecases.dart';
 import '../../domain/entities/todo_entity.dart';
 import '../../domain/usecases/get_todos.dart';
 
@@ -12,7 +13,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     on<LoadTodosEvent>((event, emit) async {
       emit(TodoLoading());
       try {
-        final todos = await getTodos();
+        final todos = await getTodos(NoParams());
         emit(TodoLoaded(todos));
       } catch (e) {
         emit(TodoError("Failed to load todos"));
