@@ -1,125 +1,118 @@
 import 'dart:io';
 
 void main() {
-  stdout.write('Masukkan nama fitur baru: ');
-  final feature = stdin.readLineSync()!.toLowerCase();
-  final className = _capitalize(feature);
-  final path = 'lib/features/$feature';
+  stdout.write('Masukkan nama feature (contoh: profile): ');
+  final featureName = stdin.readLineSync()?.toLowerCase();
+  if (featureName == null || featureName.isEmpty) {
+    print('Nama feature tidak boleh kosong.');
+    return;
+  }
 
+  final pascalCaseFeature =
+      featureName[0].toUpperCase() + featureName.substring(1);
+
+  final basePath = 'lib/features/$featureName';
   final folders = [
-    '$path/data/datasources',
-    '$path/data/repositories',
-    '$path/domain/entities',
-    '$path/domain/repositories',
-    '$path/domain/usecases',
-    '$path/presentation/bloc',
-    '$path/presentation/pages',
+    '$basePath/data/datasources',
+    '$basePath/data/repositories',
+    '$basePath/domain/entities',
+    '$basePath/domain/repositories',
+    '$basePath/domain/usecases',
+    '$basePath/presentation/bloc',
+    '$basePath/presentation/pages',
+    '$basePath/presentation/widgets',
   ];
 
   final files = {
-    '$path/domain/entities/$feature.dart': '''
-class ${className}Entity {
+    '$basePath/data/datasources/${featureName}_local_datasource.dart':
+        """abstract class ${pascalCaseFeature}LocalDataSource {
+  // define methods here
+}
+
+class Dummy${pascalCaseFeature}LocalDataSource implements ${pascalCaseFeature}LocalDataSource {
+  // implement dummy methods
+}
+""",
+
+    '$basePath/data/repositories/${featureName}_repository_impl.dart':
+        """import '../../domain/repositories/${featureName}_repository.dart';
+
+class ${pascalCaseFeature}RepositoryImpl implements ${pascalCaseFeature}Repository {
+  @override
+  List<String> fetchData() => ['Example data'];
+}
+""",
+
+    '$basePath/domain/entities/${featureName}.dart':
+        """class ${pascalCaseFeature} {
   final String id;
   final String name;
 
-  ${className}Entity({required this.id, required this.name});
+  ${pascalCaseFeature}({required this.id, required this.name});
 }
-''',
-    '$path/domain/repositories/${feature}_repository.dart': '''
-import '../entities/$feature.dart';
+""",
 
-abstract class ${className}Repository {
-  Future<List<${className}Entity>> get${className}s();
+    '$basePath/domain/repositories/${featureName}_repository.dart':
+        """abstract class ${pascalCaseFeature}Repository {
+  List<String> fetchData();
 }
-''',
-    '$path/domain/usecases/get_${feature}s.dart': '''
-import '../../../../core/usecases/usecase.dart';
-import '../entities/$feature.dart';
-import '../repositories/${feature}_repository.dart';
+""",
 
-class Get${className}s implements UseCase<List<${className}Entity>, void> {
-  final ${className}Repository repository;
+    '$basePath/domain/usecases/get_${featureName}s.dart':
+        """import 'package:flutter_clean_architecture_template/core/usecases/usecase.dart';
+import '../repositories/${featureName}_repository.dart';
 
-  Get${className}s(this.repository);
+class Get${pascalCaseFeature}s extends UseCase<List<String>, NoParams> {
+  final ${pascalCaseFeature}Repository repository;
+
+  Get${pascalCaseFeature}s(this.repository);
 
   @override
-  Future<List<${className}Entity>> call(void params) {
-    return repository.get${className}s();
+  Future<List<String>> call(NoParams params) async {
+    return repository.fetchData();
   }
 }
-''',
-    '$path/data/datasources/${feature}_remote_datasource.dart': '''
-abstract class ${className}RemoteDataSource {
-  Future<List<Map<String, dynamic>>> fetchRemote${className}s();
-}
-''',
-    '$path/data/datasources/${feature}_local_datasource.dart': '''
-abstract class ${className}LocalDataSource {
-  Future<List<Map<String, dynamic>>> fetchLocal${className}s();
-}
-''',
-    '$path/data/repositories/${feature}_repository_impl.dart': '''
-import '../../domain/entities/$feature.dart';
-import '../../domain/repositories/${feature}_repository.dart';
-import '../datasources/${feature}_remote_datasource.dart';
-import '../datasources/${feature}_local_datasource.dart';
+""",
 
-class ${className}RepositoryImpl implements ${className}Repository {
-  final ${className}RemoteDataSource remote;
-  final ${className}LocalDataSource local;
+    '$basePath/presentation/bloc/${featureName}_bloc.dart':
+        """import 'package:flutter_bloc/flutter_bloc.dart';
 
-  ${className}RepositoryImpl(this.remote, this.local);
+abstract class ${pascalCaseFeature}Event {}
+class Load${pascalCaseFeature}sEvent extends ${pascalCaseFeature}Event {}
 
-  @override
-  Future<List<${className}Entity>> get${className}s() async {
-    final data = await remote.fetchRemote${className}s();
-    return data.map((e) => ${className}Entity(id: e['id'], name: e['name'])).toList();
-  }
-}
-''',
-    '$path/presentation/bloc/${feature}_bloc.dart': '''
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/usecases/get_${feature}s.dart';
-
-abstract class ${className}Event {}
-class Load${className}sEvent extends ${className}Event {}
-
-abstract class ${className}State {}
-class ${className}Initial extends ${className}State {}
-class ${className}Loaded extends ${className}State {
-  final List data;
-  ${className}Loaded(this.data);
+abstract class ${pascalCaseFeature}State {}
+class ${pascalCaseFeature}Initial extends ${pascalCaseFeature}State {}
+class ${pascalCaseFeature}Loaded extends ${pascalCaseFeature}State {
+  final List<String> items;
+  ${pascalCaseFeature}Loaded(this.items);
 }
 
-class ${className}Bloc extends Bloc<${className}Event, ${className}State> {
-  final Get${className}s get${className}s;
-
-  ${className}Bloc(this.get${className}s) : super(${className}Initial()) {
-    on<Load${className}sEvent>((event, emit) async {
-      final items = await get${className}s.call(null);
-      emit(${className}Loaded(items));
+class ${pascalCaseFeature}Bloc extends Bloc<${pascalCaseFeature}Event, ${pascalCaseFeature}State> {
+  ${pascalCaseFeature}Bloc() : super(${pascalCaseFeature}Initial()) {
+    on<Load${pascalCaseFeature}sEvent>((event, emit) {
+      emit(${pascalCaseFeature}Loaded(['Item 1', 'Item 2']));
     });
   }
 }
-''',
-    '$path/presentation/pages/${feature}_page.dart': '''
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/${feature}_bloc.dart';
+""",
 
-class ${className}Page extends StatelessWidget {
-  const ${className}Page({super.key});
+    '$basePath/presentation/pages/${featureName}_page.dart':
+        """import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/${featureName}_bloc.dart';
+
+class ${pascalCaseFeature}Page extends StatelessWidget {
+  const ${pascalCaseFeature}Page({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('$className Page')),
-      body: BlocBuilder<${className}Bloc, ${className}State>(
+      appBar: AppBar(title: const Text('$pascalCaseFeature Page')),
+      body: BlocBuilder<${pascalCaseFeature}Bloc, ${pascalCaseFeature}State>(
         builder: (context, state) {
-          if (state is ${className}Loaded) {
-            return ListView.builder(
-              itemCount: state.data.length,
-              itemBuilder: (_, i) => ListTile(title: Text(state.data[i].name)),
+          if (state is ${pascalCaseFeature}Loaded) {
+            return ListView(
+              children: state.items.map((e) => ListTile(title: Text(e))).toList(),
             );
           }
           return const Center(child: CircularProgressIndicator());
@@ -128,7 +121,7 @@ class ${className}Page extends StatelessWidget {
     );
   }
 }
-''',
+""",
   };
 
   for (var folder in folders) {
@@ -139,59 +132,58 @@ class ${className}Page extends StatelessWidget {
     File(path).writeAsStringSync(content);
   });
 
-  _appendInjection(feature, className);
-  _appendRoute(feature, className);
+  // Inject dependencies into injection_container.dart
+  final injectionFile = File('lib/injection_container.dart');
+  if (injectionFile.existsSync()) {
+    var content = injectionFile.readAsStringSync();
+    content = content.replaceFirst(
+      '// NEW_IMPORT_HERE',
+      "import 'features/$featureName/data/datasources/${featureName}_local_datasource.dart';\n" +
+          "import 'features/$featureName/data/repositories/${featureName}_repository_impl.dart';\n" +
+          "import 'features/$featureName/domain/repositories/${featureName}_repository.dart';\n" +
+          "import 'features/$featureName/domain/usecases/get_${featureName}s.dart';\n" +
+          "import 'features/$featureName/presentation/bloc/${featureName}_bloc.dart';\n" +
+          '// NEW_IMPORT_HERE',
+    );
 
-  print('✅ Fitur "$feature" berhasil digenerate!');
-}
+    content = content.replaceFirst(
+      '// NEW_DEPENDENCY_HERE',
+      "  // $pascalCaseFeature\n" +
+          "  sl.registerFactory(() => ${pascalCaseFeature}Bloc());\n" +
+          "  sl.registerLazySingleton(() => Get${pascalCaseFeature}s(sl()));\n" +
+          "  sl.registerLazySingleton<${pascalCaseFeature}Repository>(() => ${pascalCaseFeature}RepositoryImpl());\n" +
+          "  sl.registerLazySingleton<${pascalCaseFeature}LocalDataSource>(() => Dummy${pascalCaseFeature}LocalDataSource());\n\n" +
+          '  // NEW_DEPENDENCY_HERE',
+    );
 
-String _capitalize(String text) => text[0].toUpperCase() + text.substring(1);
+    injectionFile.writeAsStringSync(content);
+  }
 
-void _appendInjection(String feature, String className) {
-  final file = File('lib/injection_container.dart');
-  final content = file.readAsStringSync();
+  // Add route to router.dart
+  final routerFile = File('lib/router.dart');
+  if (routerFile.existsSync()) {
+    var content = routerFile.readAsStringSync();
+    content = content.replaceFirst(
+      '// NEW_IMPORT_PAGE_HERE',
+      "import 'features/$featureName/presentation/pages/${featureName}_page.dart';\n" +
+          "import 'features/$featureName/presentation/bloc/${featureName}_bloc.dart';\n" +
+          '// NEW_IMPORT_PAGE_HERE',
+    );
 
-  final newLines = '''
-  // $className Feature
-  sl.registerFactory(() => ${className}Bloc(sl()));
-  sl.registerLazySingleton(() => Get${className}s(sl()));
-  sl.registerLazySingleton<${className}Repository>(() => ${className}RepositoryImpl(sl(), sl()));
-  sl.registerLazySingleton<${className}RemoteDataSource>(() => Your${className}RemoteDataSourceImpl());
-  sl.registerLazySingleton<${className}LocalDataSource>(() => Your${className}LocalDataSourceImpl());
-''';
+    content = content.replaceFirst(
+      '// NEW_ROUTE_HERE',
+      "    GoRoute(\n" +
+          "      path: '/$featureName',\n" +
+          "      builder: (context, state) => BlocProvider(\n" +
+          "        create: (_) => sl<${pascalCaseFeature}Bloc>()..add(Load${pascalCaseFeature}sEvent()),\n" +
+          "        child: const ${pascalCaseFeature}Page(),\n" +
+          "      ),\n" +
+          "    ),\n\n" +
+          '    // NEW_ROUTE_HERE',
+    );
 
-  final updated = content.replaceFirst(
-    'Future<void> init() async {',
-    'Future<void> init() async {\n$newLines',
-  );
+    routerFile.writeAsStringSync(content);
+  }
 
-  file.writeAsStringSync(updated);
-}
-
-void _appendRoute(String feature, String className) {
-  final file = File('lib/router.dart');
-  final content = file.readAsStringSync();
-
-  final importLine =
-      "import 'features/$feature/presentation/pages/${feature}_page.dart';";
-  final routeEntry = '''
-        GoRoute(
-          path: '/$feature',
-          builder: (context, state) {
-            return BlocProvider(
-              create: (_) => sl<${className}Bloc>()..add(Load${className}sEvent()),
-              child: const ${className}Page(),
-            );
-          },
-        ),
-''';
-
-  final newContent = content
-      .replaceFirst('// NEW_IMPORT_HERE', "$importLine\n// NEW_IMPORT_HERE")
-      .replaceFirst(
-        '// NEW_ROUTE_HERE',
-        "$routeEntry\n        // NEW_ROUTE_HERE",
-      );
-
-  file.writeAsStringSync(newContent);
+  print('\n✅ Feature "$featureName" berhasil dibuat dan diinject otomatis!');
 }
