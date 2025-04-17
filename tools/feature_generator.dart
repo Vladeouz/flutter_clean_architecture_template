@@ -41,12 +41,21 @@ class Dummy${pascalCaseFeature}LocalDataSource implements ${pascalCaseFeature}Lo
 }
 """,
 
-    '$basePath/data/models/${featureName}_model.dart':
-        """class ${pascalCaseFeature}Model {
-  final String id;
-  final String name;
+    '$basePath/data/datasources/${featureName}_remote_datasource.dart':
+        """abstract class ${pascalCaseFeature}RemoteDataSource {
+  // define methods here
+}
 
-  ${pascalCaseFeature}Model({required this.id, required this.name});
+class Dummy${pascalCaseFeature}RemoteDataSource implements ${pascalCaseFeature}RemoteDataSource {
+  // implement dummy methods
+}
+""",
+
+    '$basePath/data/models/${featureName}_model.dart':
+        """import '../../domain/entities/${featureName}.dart';
+
+class ${pascalCaseFeature}Model extends ${pascalCaseFeature} {
+  ${pascalCaseFeature}Model({required super.id, required super.name});
 
   factory ${pascalCaseFeature}Model.fromJson(Map<String, dynamic> json) {
     return ${pascalCaseFeature}Model(
@@ -176,6 +185,7 @@ class ${pascalCaseFeature}Page extends StatelessWidget {
     content = content.replaceFirst(
       '// NEW_IMPORT_HERE',
       "import 'features/$featureName/data/datasources/${featureName}_local_datasource.dart';\n" +
+          "import 'features/$featureName/data/datasources/${featureName}_remote_datasource.dart';\n" +
           "import 'features/$featureName/data/repositories/${featureName}_repository_impl.dart';\n" +
           "import 'features/$featureName/domain/repositories/${featureName}_repository.dart';\n" +
           "import 'features/$featureName/domain/usecases/get_${featureName}s.dart';\n" +
@@ -189,7 +199,8 @@ class ${pascalCaseFeature}Page extends StatelessWidget {
           "  sl.registerFactory(() => ${pascalCaseFeature}Bloc());\n" +
           "  sl.registerLazySingleton(() => Get${pascalCaseFeature}s(sl()));\n" +
           "  sl.registerLazySingleton<${pascalCaseFeature}Repository>(() => ${pascalCaseFeature}RepositoryImpl());\n" +
-          "  sl.registerLazySingleton<${pascalCaseFeature}LocalDataSource>(() => Dummy${pascalCaseFeature}LocalDataSource());\n\n" +
+          "  sl.registerLazySingleton<${pascalCaseFeature}LocalDataSource>(() => Dummy${pascalCaseFeature}LocalDataSource());\n" +
+          "  sl.registerLazySingleton<${pascalCaseFeature}RemoteDataSource>(() => Dummy${pascalCaseFeature}RemoteDataSource());\n\n" +
           '  // NEW_DEPENDENCY_HERE',
     );
 
