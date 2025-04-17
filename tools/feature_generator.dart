@@ -1,19 +1,26 @@
 import 'dart:io';
 
 void main() {
-  stdout.write('Masukkan nama feature (contoh: profile): ');
+  stdout.write('Masukkan nama feature (contoh: sign_in): ');
   final featureName = stdin.readLineSync()?.toLowerCase();
   if (featureName == null || featureName.isEmpty) {
     print('Nama feature tidak boleh kosong.');
     return;
   }
 
-  final pascalCaseFeature =
-      featureName[0].toUpperCase() + featureName.substring(1);
+  String toPascalCase(String text) {
+    return text
+        .split('_')
+        .map((w) => w[0].toUpperCase() + w.substring(1))
+        .join();
+  }
+
+  final pascalCaseFeature = toPascalCase(featureName);
 
   final basePath = 'lib/features/$featureName';
   final folders = [
     '$basePath/data/datasources',
+    '$basePath/data/models',
     '$basePath/data/repositories',
     '$basePath/domain/entities',
     '$basePath/domain/repositories',
@@ -31,6 +38,27 @@ void main() {
 
 class Dummy${pascalCaseFeature}LocalDataSource implements ${pascalCaseFeature}LocalDataSource {
   // implement dummy methods
+}
+""",
+
+    '$basePath/data/models/${featureName}_model.dart':
+        """class ${pascalCaseFeature}Model {
+  final String id;
+  final String name;
+
+  ${pascalCaseFeature}Model({required this.id, required this.name});
+
+  factory ${pascalCaseFeature}Model.fromJson(Map<String, dynamic> json) {
+    return ${pascalCaseFeature}Model(
+      id: json['id'],
+      name: json['name'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+      };
 }
 """,
 
@@ -59,7 +87,7 @@ class ${pascalCaseFeature}RepositoryImpl implements ${pascalCaseFeature}Reposito
 """,
 
     '$basePath/domain/usecases/get_${featureName}s.dart':
-        """import 'package:flutter_clean_architecture_template/core/usecases/usecase.dart';
+        """import 'package:flutter_clean_architecture_template/core/usecases/usecases.dart';
 import '../repositories/${featureName}_repository.dart';
 
 class Get${pascalCaseFeature}s extends UseCase<List<String>, NoParams> {
@@ -76,16 +104,8 @@ class Get${pascalCaseFeature}s extends UseCase<List<String>, NoParams> {
 
     '$basePath/presentation/bloc/${featureName}_bloc.dart':
         """import 'package:flutter_bloc/flutter_bloc.dart';
-
-abstract class ${pascalCaseFeature}Event {}
-class Load${pascalCaseFeature}sEvent extends ${pascalCaseFeature}Event {}
-
-abstract class ${pascalCaseFeature}State {}
-class ${pascalCaseFeature}Initial extends ${pascalCaseFeature}State {}
-class ${pascalCaseFeature}Loaded extends ${pascalCaseFeature}State {
-  final List<String> items;
-  ${pascalCaseFeature}Loaded(this.items);
-}
+import '${featureName}_event.dart';
+import '${featureName}_state.dart';
 
 class ${pascalCaseFeature}Bloc extends Bloc<${pascalCaseFeature}Event, ${pascalCaseFeature}State> {
   ${pascalCaseFeature}Bloc() : super(${pascalCaseFeature}Initial()) {
@@ -96,10 +116,28 @@ class ${pascalCaseFeature}Bloc extends Bloc<${pascalCaseFeature}Event, ${pascalC
 }
 """,
 
+    '$basePath/presentation/bloc/${featureName}_event.dart':
+        """abstract class ${pascalCaseFeature}Event {}
+
+class Load${pascalCaseFeature}sEvent extends ${pascalCaseFeature}Event {}
+""",
+
+    '$basePath/presentation/bloc/${featureName}_state.dart':
+        """abstract class ${pascalCaseFeature}State {}
+
+class ${pascalCaseFeature}Initial extends ${pascalCaseFeature}State {}
+
+class ${pascalCaseFeature}Loaded extends ${pascalCaseFeature}State {
+  final List<String> items;
+  ${pascalCaseFeature}Loaded(this.items);
+}
+""",
+
     '$basePath/presentation/pages/${featureName}_page.dart':
         """import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/${featureName}_bloc.dart';
+import '../bloc/${featureName}_state.dart';
 
 class ${pascalCaseFeature}Page extends StatelessWidget {
   const ${pascalCaseFeature}Page({super.key});
@@ -132,7 +170,6 @@ class ${pascalCaseFeature}Page extends StatelessWidget {
     File(path).writeAsStringSync(content);
   });
 
-  // Inject dependencies into injection_container.dart
   final injectionFile = File('lib/injection_container.dart');
   if (injectionFile.existsSync()) {
     var content = injectionFile.readAsStringSync();
@@ -159,7 +196,6 @@ class ${pascalCaseFeature}Page extends StatelessWidget {
     injectionFile.writeAsStringSync(content);
   }
 
-  // Add route to router.dart
   final routerFile = File('lib/router.dart');
   if (routerFile.existsSync()) {
     var content = routerFile.readAsStringSync();
@@ -167,6 +203,7 @@ class ${pascalCaseFeature}Page extends StatelessWidget {
       '// NEW_IMPORT_PAGE_HERE',
       "import 'features/$featureName/presentation/pages/${featureName}_page.dart';\n" +
           "import 'features/$featureName/presentation/bloc/${featureName}_bloc.dart';\n" +
+          "import 'features/$featureName/presentation/bloc/${featureName}_event.dart';\n" +
           '// NEW_IMPORT_PAGE_HERE',
     );
 
