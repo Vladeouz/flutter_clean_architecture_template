@@ -34,7 +34,6 @@ lib/ <br/>
 │ └── widgets/ <br/>
 └── injection_container.dart <br/>
 
-
 ### Core
 
 - **`core/`**: Contains shared resources such as utilities, error handling, and common use cases.
