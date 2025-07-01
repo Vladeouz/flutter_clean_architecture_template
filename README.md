@@ -14,25 +14,25 @@ This is a Flutter project template that implements **Clean Architecture** with *
 
 The project is organized as follows:
 
-## lib/
-## ├── core/
-## │├── errors/
-## │├── usecases/
-## │└── utils/
-## ├── features/
-## │ └── todo/
-## │ ├── data/
-## │ ├── models/
-## │ │ └── repositories/
-## │ ├── domain/
-## │ ├── entities/
-## │ ├── repositories/
-## │ │ └── usecases/
-## │ └── presentation/
-## │ ├── bloc/
-## │ ├── pages/
-## │ └── widgets/
-## └── injection_container.dart
+lib/ <br/>
+├── core/ <br/>
+│├── errors/ <br/>
+│├── usecases/ <br/>
+│└── utils/ <br/>
+├── features/ <br/>
+│ └── todo/ <br/>
+│ ├── data/ <br/>
+│ ├── models/ <br/>
+│ │ └── repositories/ <br/>
+│ ├── domain/ <br/>
+│ ├── entities/ <br/>
+│ ├── repositories/ <br/>
+│ │ └── usecases/ <br/>
+│ └── presentation/ <br/>
+│ ├── bloc/ <br/>
+│ ├── pages/ <br/>
+│ └── widgets/ <br/>
+└── injection_container.dart <br/>
 
 
 ### Core
