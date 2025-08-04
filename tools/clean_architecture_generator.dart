@@ -70,7 +70,7 @@ abstract class TodoRepository {
 }
 ''',
     'lib/features/todo/domain/usecases/get_todos.dart': '''
-import 'package:flutter_clean_architecture_template/core/usecases/usecase.dart';
+import 'package:nupay/core/usecases/usecase.dart';
 import '../repositories/todo_repository.dart';
 import '../entities/todo.dart';
 

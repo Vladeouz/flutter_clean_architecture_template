@@ -1,12 +1,18 @@
 import 'dart:io';
 
-void main() {
+void createFeature() {
   stdout.write('Masukkan nama feature (contoh: sign_in): ');
   final featureName = stdin.readLineSync()?.toLowerCase();
   if (featureName == null || featureName.isEmpty) {
     print('Nama feature tidak boleh kosong.');
     return;
   }
+
+  stdout.write('Butuh Local DataSource? (y/n): ');
+  final useLocal = stdin.readLineSync()?.toLowerCase() == 'y';
+
+  stdout.write('Butuh Remote DataSource? (y/n): ');
+  final useRemote = stdin.readLineSync()?.toLowerCase() == 'y';
 
   String toPascalCase(String text) {
     return text
@@ -15,11 +21,17 @@ void main() {
         .join();
   }
 
+  String toKebabCase(String text) {
+    return text.replaceAll('_', '-');
+  }
+
   final pascalCaseFeature = toPascalCase(featureName);
+  final kebabCaseFeature = toKebabCase(featureName);
 
   final basePath = 'lib/features/$featureName';
   final folders = [
-    '$basePath/data/datasources',
+    if (useLocal) '$basePath/data/datasources',
+    if (useRemote) '$basePath/data/datasources',
     '$basePath/data/models',
     '$basePath/data/repositories',
     '$basePath/domain/entities',
@@ -30,23 +42,25 @@ void main() {
     '$basePath/presentation/widgets',
   ];
 
-  final files = {
-    '$basePath/data/datasources/${featureName}_local_datasource.dart':
-        """abstract class ${pascalCaseFeature}LocalDataSource {
+  final files = <String, String>{
+    if (useLocal)
+      '$basePath/data/datasources/${featureName}_local_datasource.dart':
+          """abstract class ${pascalCaseFeature}LocalDataSource {
   // define methods here
 }
 
-class Dummy${pascalCaseFeature}LocalDataSource implements ${pascalCaseFeature}LocalDataSource {
+class ${pascalCaseFeature}LocalDataSourceImpl implements ${pascalCaseFeature}LocalDataSource {
   // implement dummy methods
 }
 """,
 
-    '$basePath/data/datasources/${featureName}_remote_datasource.dart':
-        """abstract class ${pascalCaseFeature}RemoteDataSource {
+    if (useRemote)
+      '$basePath/data/datasources/${featureName}_remote_datasource.dart':
+          """abstract class ${pascalCaseFeature}RemoteDataSource {
   // define methods here
 }
 
-class Dummy${pascalCaseFeature}RemoteDataSource implements ${pascalCaseFeature}RemoteDataSource {
+class ${pascalCaseFeature}RemoteDataSourceImpl implements ${pascalCaseFeature}RemoteDataSource {
   // implement dummy methods
 }
 """,
@@ -96,7 +110,7 @@ class ${pascalCaseFeature}RepositoryImpl implements ${pascalCaseFeature}Reposito
 """,
 
     '$basePath/domain/usecases/get_${featureName}s.dart':
-        """import 'package:flutter_clean_architecture_template/core/usecases/usecases.dart';
+        """import 'package:nupay/core/usecases/usecases.dart';
 import '../repositories/${featureName}_repository.dart';
 
 class Get${pascalCaseFeature}s extends UseCase<List<String>, NoParams> {
@@ -184,24 +198,32 @@ class ${pascalCaseFeature}Page extends StatelessWidget {
     var content = injectionFile.readAsStringSync();
     content = content.replaceFirst(
       '// NEW_IMPORT_HERE',
-      "import 'features/$featureName/data/datasources/${featureName}_local_datasource.dart';\n" +
-          "import 'features/$featureName/data/datasources/${featureName}_remote_datasource.dart';\n" +
-          "import 'features/$featureName/data/repositories/${featureName}_repository_impl.dart';\n" +
+      "import 'features/$featureName/data/repositories/${featureName}_repository_impl.dart';\n" +
           "import 'features/$featureName/domain/repositories/${featureName}_repository.dart';\n" +
           "import 'features/$featureName/domain/usecases/get_${featureName}s.dart';\n" +
           "import 'features/$featureName/presentation/bloc/${featureName}_bloc.dart';\n" +
+          (useLocal
+              ? "import 'features/$featureName/data/datasources/${featureName}_local_datasource.dart';\n"
+              : '') +
+          (useRemote
+              ? "import 'features/$featureName/data/datasources/${featureName}_remote_datasource.dart';\n"
+              : '') +
           '// NEW_IMPORT_HERE',
     );
 
     content = content.replaceFirst(
       '// NEW_DEPENDENCY_HERE',
-      "  // $pascalCaseFeature\n" +
-          "  sl.registerFactory(() => ${pascalCaseFeature}Bloc());\n" +
-          "  sl.registerLazySingleton(() => Get${pascalCaseFeature}s(sl()));\n" +
-          "  sl.registerLazySingleton<${pascalCaseFeature}Repository>(() => ${pascalCaseFeature}RepositoryImpl());\n" +
-          "  sl.registerLazySingleton<${pascalCaseFeature}LocalDataSource>(() => Dummy${pascalCaseFeature}LocalDataSource());\n" +
-          "  sl.registerLazySingleton<${pascalCaseFeature}RemoteDataSource>(() => Dummy${pascalCaseFeature}RemoteDataSource());\n\n" +
-          '  // NEW_DEPENDENCY_HERE',
+      "\n  // Features - $pascalCaseFeature\n" +
+          "  // Bloc\n  sl.registerFactory(() => ${pascalCaseFeature}Bloc());\n" +
+          "  // Usecase\n  sl.registerLazySingleton(() => Get${pascalCaseFeature}s(sl()));\n" +
+          "  // Repository\n  sl.registerLazySingleton<${pascalCaseFeature}Repository>(() => ${pascalCaseFeature}RepositoryImpl());\n" +
+          (useLocal
+              ? "  // Data source\n  sl.registerLazySingleton<${pascalCaseFeature}LocalDataSource>(() => ${pascalCaseFeature}LocalDataSourceImpl());\n"
+              : '') +
+          (useRemote
+              ? "  // Data source\n  sl.registerLazySingleton<${pascalCaseFeature}RemoteDataSource>(() => ${pascalCaseFeature}RemoteDataSourceImpl());\n"
+              : '') +
+          '\n  // NEW_DEPENDENCY_HERE',
     );
 
     injectionFile.writeAsStringSync(content);
@@ -221,7 +243,7 @@ class ${pascalCaseFeature}Page extends StatelessWidget {
     content = content.replaceFirst(
       '// NEW_ROUTE_HERE',
       "    GoRoute(\n" +
-          "      path: '/$featureName',\n" +
+          "      path: '/$kebabCaseFeature',\n" +
           "      builder: (context, state) => BlocProvider(\n" +
           "        create: (_) => sl<${pascalCaseFeature}Bloc>()..add(Load${pascalCaseFeature}sEvent()),\n" +
           "        child: const ${pascalCaseFeature}Page(),\n" +

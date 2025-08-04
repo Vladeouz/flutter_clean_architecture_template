@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_clean_architecture_template/core/theme/app_theme.dart';
 import 'package:flutter_clean_architecture_template/injection_container.dart';
 import 'package:flutter_clean_architecture_template/router.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:sizer/sizer.dart';
 
 void main() {
   init(); // Inisialisasi dependency injection
@@ -12,10 +15,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Flutter Clean Architecture',
-      routerConfig: AppRouter.router, // Gunakan router dari file router.dart
-      theme: ThemeData(primarySwatch: Colors.blue),
+    return Sizer(
+      builder: (context, orientation, screenType) {
+        return MaterialApp.router(
+          title: 'nupay',
+          routerConfig: AppRouter.router,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode:
+              ThemeMode.system, // ganti ke light/dark/system sesuai kebutuhan
+          builder: EasyLoading.init(),
+        );
+      },
     );
   }
 }

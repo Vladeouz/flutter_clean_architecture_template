@@ -8,28 +8,28 @@ import 'injection_container.dart'; // Import dependency injection
 // NEW_IMPORT_HERE
 
 class AppRouter {
-  static GoRouter get router {
-    return GoRouter(
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) {
-            return BlocProvider(
-              create:
-                  (_) =>
-                      sl<TodoBloc>()..add(
-                        LoadTodosEvent(),
-                      ), // Memberikan TodoBloc ke halaman ini
-              child: const TodoPage(),
-            );
-          },
-        ),
-        GoRoute(
-          path: '/another',
-          builder: (context, state) => const AnotherPage(),
-        ),
-        // NEW_ROUTE_HERE
-      ],
-    );
-  }
+  static final GoRouter router = GoRouter(
+    initialLocation: '/',
+    debugLogDiagnostics: true, // opsional untuk debugging
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) {
+          return BlocProvider(
+            create:
+                (_) =>
+                    sl<TodoBloc>()..add(
+                      LoadTodosEvent(),
+                    ), // Memberikan TodoBloc ke halaman ini
+            child: const TodoPage(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/another',
+        builder: (context, state) => const AnotherPage(),
+      ),
+      // NEW_ROUTE_HERE
+    ],
+  );
 }
